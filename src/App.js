@@ -8,13 +8,7 @@ import Login from './Pages/Login';
 import Dashboard from './Pages/Dashboard/Dashboard';
 import Patients from './Pages/Dashboard/Patients';
 import DashBoardAppointments from './Pages/Dashboard/Appointments';
-import * as firebase from "firebase/app";
-import "firebase/analytics";
-import "firebase/auth";
-import firebaseConfig from './Firebase.config';
-
-firebase.initializeApp(firebaseConfig);
-
+import Prescriptions from './Pages/Dashboard/Prescriptions';
 export const DataContext = createContext();
 export const CalenderContext = createContext()
 
@@ -25,11 +19,15 @@ function App() {
   const [allBookedAppointments , setAllBookedAppointments] = useState([]);
   const [allPatients , setAllPatients] = useState([]);
   const [date, setDate] = useState(new Date());
+  const [preLoaderVisibility, setPreLoaderVisibility] = useState(true);
 
   useEffect(() => {
     fetch("https://doctor-portal-backend.herokuapp.com/appointments")
     .then(res => res.json())
-      .then(data => setAllAppointments(data))
+    .then(data => {
+      setAllAppointments(data);
+      setPreLoaderVisibility(false);
+    })
   }, [allAppointments.length])
 
   useEffect(() => {
@@ -37,16 +35,19 @@ function App() {
       .then(res => res.json())
       .then(data => setAllBookedAppointments(data));
       
-      const uniquePatients = []
+      const uniquePatients = [];
       const map = new Map();
       if(allBookedAppointments.length){
         for (const ap of allBookedAppointments) {
-          if(!map.has(ap.pataintInfo.phone)){
-              map.set(ap.pataintInfo.phone, true);    // set any value to Map
+          if(!map.has(ap.patientInfo.phone)){
+              map.set(ap.patientInfo.phone, true);    
               uniquePatients.push({
-                  name: ap.pataintInfo.name,
-                  phone: ap.pataintInfo.phone,
-                  email : ap.pataintInfo.email
+                  name: ap.patientInfo.name,
+                  phone: ap.patientInfo.phone,
+                  email : ap.patientInfo.email,
+                  gender : ap.patientInfo.gender,
+                  age : ap.patientInfo.age,
+                  weight : ap.patientInfo.weight
               });
           }
          }
@@ -56,7 +57,7 @@ function App() {
 
   }, [allBookedAppointments.length])
 
-  const contextData = {allAppointments, setAllAppointments, allBookedAppointments,setAllBookedAppointments , allPatients}
+  const contextData = {allAppointments, setAllAppointments, allBookedAppointments,setAllBookedAppointments , allPatients , preLoaderVisibility}
   const calenderContextValue ={date, setDate};
 
   return (
@@ -82,6 +83,9 @@ function App() {
           </Route>
           <Route  path="/doctor/appointment">
             <DashBoardAppointments/>
+          </Route>
+          <Route  path="/doctor/prescriptions">
+            <Prescriptions/>
           </Route>
           <Route path="*">
               <NotFound/>
